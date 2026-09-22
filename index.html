@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Weather</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f2f5f9;
+    --card-bg: #ffffff;
+    --text: #1c2530;
+    --muted: #5b6673;
+    --border: rgba(0,0,0,0.08);
+    --shadow: 0 4px 16px rgba(20, 30, 50, 0.08);
+    --accent: #4a90d9;
+    --accent-soft: #eaf3fc;
+    --input-bg: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12161c;
+      --card-bg: #1b212a;
+      --text: #eef2f6;
+      --muted: #9aa5b1;
+      --border: rgba(255,255,255,0.08);
+      --shadow: 0 4px 20px rgba(0,0,0,0.4);
+      --accent: #6ba9e8;
+      --accent-soft: #22303f;
+      --input-bg: #232a34;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.45;
+    min-height: 100vh;
+  }
+  .page {
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 32px 16px 60px;
+  }
+  .app {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  h1 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 2px;
+    text-align: center;
+    letter-spacing: 0.2px;
+  }
+  .subtitle {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+  form.search {
+    display: flex;
+    gap: 8px;
+  }
+  input[type="text"] {
+    flex: 1;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    color: var(--text);
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  input[type="text"]:focus {
+    border-color: var(--accent);
+  }
+  button.search-btn {
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: none;
+    background: var(--accent);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.1s ease;
+  }
+  button.search-btn:hover { filter: brightness(1.08); }
+  button.search-btn:active { transform: scale(0.97); }
+  button.search-btn:disabled { opacity: 0.6; cursor: default; }
+
+  .status {
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+    min-height: 16px;
+  }
+  .status.error { color: #d9534f; }
+
+  .current-card {
+    background: linear-gradient(160deg, var(--accent-soft), var(--card-bg));
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 26px 22px;
+    box-shadow: var(--shadow);
+    text-align: center;
+    transition: background 0.3s ease;
+  }
+  .current-card .city {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .current-card .datetime {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .current-card .icon {
+    font-size: 54px;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .current-card .temp {
+    font-size: 46px;
+    font-weight: 700;
+    letter-spacing: -1px;
+  }
+  .current-card .desc {
+    font-size: 14.5px;
+    color: var(--muted);
+    margin-top: 2px;
+    text-transform: capitalize;
+  }
+  .current-card .meta {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .current-card .meta span strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .forecast-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--muted);
+    margin: 4px 2px -4px;
+  }
+  .forecast {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .day-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 14px;
+    padding: 12px 16px;
+    box-shadow: var(--shadow);
+  }
+  .day-card .day-name {
+    width: 68px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .day-card .day-icon {
+    font-size: 24px;
+    width: 32px;
+    text-align: center;
+  }
+  .day-card .day-desc {
+    flex: 1;
+    color: var(--muted);
+    font-size: 13px;
+    text-transform: capitalize;
+  }
+  .day-card .day-temps {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .day-card .day-temps .lo {
+    color: var(--muted);
+    font-weight: 500;
+    margin-left: 6px;
+  }
+
+  footer {
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  @media (max-width: 380px) {
+    .current-card .temp { font-size: 38px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="app">
+    <h1>Weather</h1>
+    <div class="subtitle">Live conditions &amp; 5-day outlook</div>
+
+    <form class="search" id="searchForm" autocomplete="off">
+      <input type="text" id="cityInput" placeholder="Search a city…" aria-label="City name" />
+      <button type="submit" class="search-btn" id="searchBtn">Search</button>
+    </form>
+    <div class="status" id="status"></div>
+
+    <div class="current-card" id="currentCard">
+      <div class="city" id="cityName">Loading…</div>
+      <div class="datetime" id="dateTime"></div>
+      <div class="icon" id="currentIcon">⏳</div>
+      <div class="temp" id="currentTemp">--°</div>
+      <div class="desc" id="currentDesc">Fetching weather…</div>
+      <div class="meta">
+        <span>Feels like <strong id="feelsLike">--°</strong></span>
+        <span>Humidity <strong id="humidity">--%</strong></span>
+        <span>Wind <strong id="wind">-- km/h</strong></span>
+      </div>
+    </div>
+
+    <div class="forecast-title">5-Day Forecast</div>
+    <div class="forecast" id="forecast"></div>
+
+    <footer>Data via Open-Meteo. Falls back to cached data if offline.</footer>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ---------- Weather code -> description, icon, accent color ----------
+  const WMO = {
+    0:  { d: "Clear sky",            i: "☀️", c: "#f5a623" },
+    1:  { d: "Mostly clear",         i: "🌤️", c: "#f5a623" },
+    2:  { d: "Partly cloudy",        i: "⛅",  c: "#7ea6c2" },
+    3:  { d: "Overcast",             i: "☁️",  c: "#8a94a3" },
+    45: { d: "Fog",                  i: "🌫️", c: "#9aa5b1" },
+    48: { d: "Depositing rime fog",  i: "🌫️", c: "#9aa5b1" },
+    51: { d: "Light drizzle",        i: "🌦️", c: "#4a90d9" },
+    53: { d: "Drizzle",              i: "🌦️", c: "#4a90d9" },
+    55: { d: "Dense drizzle",        i: "🌧️", c: "#3d7ab8" },
+    56: { d: "Freezing drizzle",     i: "🌧️", c: "#6ba7c9" },
+    57: { d: "Dense freezing drizzle", i: "🌧️", c: "#6ba7c9" },
+    61: { d: "Light rain",           i: "🌦️", c: "#4a90d9" },
+    63: { d: "Rain",                 i: "🌧️", c: "#3d7ab8" },
+    65: { d: "Heavy rain",           i: "🌧️", c: "#2c5f8f" },
+    66: { d: "Freezing rain",        i: "🌧️", c: "#5b8fb0" },
+    67: { d: "Heavy freezing rain",  i: "🌧️", c: "#5b8fb0" },
+    71: { d: "Light snow",           i: "🌨️", c: "#8fc1e8" },
+    73: { d: "Snow",                 i: "❄️",  c: "#7ab3e0" },
+    75: { d: "Heavy snow",           i: "❄️",  c: "#5a9bd4" },
+    77: { d: "Snow grains",          i: "🌨️", c: "#8fc1e8" },
+    80: { d: "Light showers",        i: "🌦️", c: "#4a90d9" },
+    81: { d: "Showers",              i: "🌧️", c: "#3d7ab8" },
+    82: { d: "Violent showers",      i: "⛈️",  c: "#2c5f8f" },
+    85: { d: "Light snow showers",   i: "🌨️", c: "#8fc1e8" },
+    86: { d: "Heavy snow showers",   i: "❄️",  c: "#5a9bd4" },
+    95: { d: "Thunderstorm",         i: "⛈️",  c: "#6a5acd" },
+    96: { d: "Thunderstorm w/ hail", i: "⛈️",  c: "#5c4aad" },
+    99: { d: "Severe thunderstorm",  i: "⛈️",  c: "#5c4aad" }
+  };
+  function wx(code) { return WMO[code] || { d: "Unknown", i: "🌡️", c: "#4a90d9" }; }
+
+  const DAY_NAMES = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+  // ---------- Hardcoded fallback (Tokyo) ----------
+  const FALLBACK = {
+    city: "Tokyo, Japan",
+    current: { temp: 24, feels: 25, humidity: 62, wind: 11, code: 2 },
+    daily: [
+      { code: 1,  max: 26, min: 19 },
+      { code: 2,  max: 27, min: 20 },
+      { code: 61, max: 23, min: 18 },
+      { code: 3,  max: 25, min: 19 },
+      { code: 0,  max: 28, min: 21 }
+    ]
+  };
+
+  const els = {
+    form: document.getElementById("searchForm"),
+    input: document.getElementById("cityInput"),
+    btn: document.getElementById("searchBtn"),
+    status: document.getElementById("status"),
+    card: document.getElementById("currentCard"),
+    city: document.getElementById("cityName"),
+    dateTime: document.getElementById("dateTime"),
+    icon: document.getElementById("currentIcon"),
+    temp: document.getElementById("currentTemp"),
+    desc: document.getElementById("currentDesc"),
+    feels: document.getElementById("feelsLike"),
+    humidity: document.getElementById("humidity"),
+    wind: document.getElementById("wind"),
+    forecast: document.getElementById("forecast")
+  };
+
+  function setStatus(msg, isError) {
+    els.status.textContent = msg || "";
+    els.status.className = "status" + (isError ? " error" : "");
+  }
+
+  function setAccent(hex) {
+    document.documentElement.style.setProperty("--accent", hex);
+  }
+
+  function renderCurrent(cityLabel, cur) {
+    const w = wx(cur.code);
+    els.city.textContent = cityLabel;
+    els.dateTime.textContent = new Date().toLocaleDateString(undefined, {
+      weekday: "long", month: "short", day: "numeric"
+    });
+    els.icon.textContent = w.i;
+    els.temp.textContent = Math.round(cur.temp) + "°";
+    els.desc.textContent = w.d;
+    els.feels.textContent = Math.round(cur.feels) + "°";
+    els.humidity.textContent = Math.round(cur.humidity) + "%";
+    els.wind.textContent = Math.round(cur.wind) + " km/h";
+    setAccent(w.c);
+  }
+
+  function renderForecast(daily) {
+    els.forecast.innerHTML = "";
+    const today = new Date();
+    daily.slice(0, 5).forEach((d, idx) => {
+      const w = wx(d.code);
+      const date = new Date(today);
+      date.setDate(today.getDate() + idx);
+      const label = idx === 0 ? "Today" : DAY_NAMES[date.getDay()];
+
+      const row = document.createElement("div");
+      row.className = "day-card";
+      row.style.borderLeftColor = w.c;
+      row.innerHTML = `
+        <div class="day-name">${label}</div>
+        <div class="day-icon">${w.i}</div>
+        <div class="day-desc">${w.d}</div>
+        <div class="day-temps">${Math.round(d.max)}°<span class="lo">${Math.round(d.min)}°</span></div>
+      `;
+      els.forecast.appendChild(row);
+    });
+  }
+
+  function showFallback(reason) {
+    renderCurrent(FALLBACK.city, FALLBACK.current);
+    renderForecast(FALLBACK.daily);
+    setStatus(reason || "Showing cached data — live fetch failed.", true);
+  }
+
+  async function geocode(query) {
+    const url = "https://geocoding-api.open-meteo.com/v1/search?name=" +
+      encodeURIComponent(query) + "&count=1&language=en&format=json";
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Geocoding failed");
+    const data = await res.json();
+    if (!data.results || !data.results.length) throw new Error("City not found");
+    const r = data.results[0];
+    return {
+      lat: r.latitude,
+      lon: r.longitude,
+      label: [r.name, r.admin1, r.country].filter(Boolean).slice(0, r.admin1 && r.admin1 !== r.name ? 3 : undefined).join(", ")
+        .split(", ").filter((v, i, arr) => arr.indexOf(v) === i).join(", ")
+    };
+  }
+
+  async function fetchWeather(lat, lon) {
+    const url = "https://api.open-meteo.com/v1/forecast?latitude=" + lat +
+      "&longitude=" + lon +
+      "&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code" +
+      "&daily=weather_code,temperature_2m_max,temperature_2m_min" +
+      "&timezone=auto&forecast_days=5";
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Forecast fetch failed");
+    const data = await res.json();
+    const current = {
+      temp: data.current.temperature_2m,
+      feels: data.current.apparent_temperature,
+      humidity: data.current.relative_humidity_2m,
+      wind: data.current.wind_speed_10m,
+      code: data.current.weather_code
+    };
+    const daily = data.daily.time.map((_, i) => ({
+      code: data.daily.weather_code[i],
+      max: data.daily.temperature_2m_max[i],
+      min: data.daily.temperature_2m_min[i]
+    }));
+    return { current, daily };
+  }
+
+  async function loadCity(query) {
+    setStatus("Loading " + query + "…");
+    els.btn.disabled = true;
+    try {
+      const loc = await geocode(query);
+      const weather = await fetchWeather(loc.lat, loc.lon);
+      renderCurrent(loc.label, weather.current);
+      renderForecast(weather.daily);
+      setStatus("");
+    } catch (err) {
+      showFallback(
+        query.toLowerCase().includes("tokyo")
+          ? "Live fetch failed — showing offline Tokyo data."
+          : "Couldn't load \"" + query + "\" — showing Tokyo fallback."
+      );
+    } finally {
+      els.btn.disabled = false;
+    }
+  }
+
+  els.form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const q = els.input.value.trim();
+    if (q) loadCity(q);
+  });
+
+  // Initial load: Tokyo
+  loadCity("Tokyo");
+})();
+</script>
+</body>
+</html>
